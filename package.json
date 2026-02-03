@@ -1,0 +1,22 @@
+{
+  "name": "dev-dashboard",
+  "version": "1.0.0",
+  "description": "Lightweight web UI to manage multiple dev servers",
+  "main": "server.js",
+  "bin": {
+    "devd": "./cli.js"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "cli": "node cli.js"
+  },
+  "keywords": ["dev-server", "dashboard", "process-manager"],
+  "author": "Machine King Labs",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "tree-kill": "^1.2.2"
+  }
+}

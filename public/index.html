@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dev Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>DEV DASHBOARD</h1>
+    <div class="header-actions">
+      <button onclick="openScanModal()" title="Scan for running dev servers">🔍 Scan Ports</button>
+      <button onclick="startAll()" title="Start All (Shift+S)">Start All</button>
+      <button onclick="stopAll()" title="Stop All (Shift+X)">Stop All</button>
+      <button class="primary" onclick="openAddModal()">+ Add Project</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="projects" class="projects">
+      <!-- Projects rendered here -->
+    </div>
+
+    <div id="empty-state" class="empty-state" style="display: none;">
+      <h2>No projects configured</h2>
+      <p>Add your first dev server to get started</p>
+      <button class="primary" onclick="openAddModal()">+ Add Project</button>
+    </div>
+  </main>
+
+  <!-- Add/Edit Modal -->
+  <div id="modal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Project</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="project-form" onsubmit="saveProject(event)">
+          <input type="hidden" id="edit-id">
+          <div class="form-group">
+            <label for="project-name">Name</label>
+            <input type="text" id="project-name" placeholder="My Project" required>
+          </div>
+          <div class="form-group">
+            <label for="project-id">ID (slug)</label>
+            <input type="text" id="project-id" placeholder="my-project" required pattern="[a-z0-9-]+">
+          </div>
+          <div class="form-group">
+            <label for="project-folder">Folder Path</label>
+            <div class="input-with-button">
+              <input type="text" id="project-folder" placeholder="D:/git/my-project" required>
+              <button type="button" class="browse-btn" onclick="openFolderPicker()">Browse</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="project-command">Start Command</label>
+            <input type="text" id="project-command" placeholder="npm run dev" required>
+          </div>
+          <div class="form-group">
+            <label for="project-port">Port (optional)</label>
+            <input type="number" id="project-port" placeholder="3000">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="closeModal()">Cancel</button>
+        <button type="submit" form="project-form" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folder Picker Modal -->
+  <div id="folder-picker" class="modal-overlay" onclick="closeFolderPicker(event)">
+    <div class="modal folder-picker-modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Select Folder</h2>
+        <button class="modal-close" onclick="closeFolderPicker()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="folder-nav">
+          <div class="drives-bar" id="drives-bar"></div>
+          <div class="current-path">
+            <button class="nav-btn" onclick="goToParent()" id="parent-btn" title="Go up">↑</button>
+            <input type="text" id="path-input" onkeydown="if(event.key==='Enter')navigateToPath()">
+            <button class="nav-btn" onclick="navigateToPath()" title="Go">→</button>
+          </div>
+        </div>
+        <div class="folder-list" id="folder-list">
+          <!-- Folders rendered here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="closeFolderPicker()">Cancel</button>
+        <button type="button" class="primary" onclick="selectCurrentFolder()">Select This Folder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scan Modal -->
+  <div id="scan-modal" class="modal-overlay" onclick="closeScanModal(event)">
+    <div class="modal scan-modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2>🔍 Running Dev Servers</h2>
+        <button class="modal-close" onclick="closeScanModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="scan-results" class="scan-results">
+          <div class="scan-loading">Scanning ports...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="refreshScan()">↻ Refresh</button>
+        <button type="button" onclick="closeScanModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toasts" class="toast-container"></div>
+
+  <!-- Connection status -->
+  <div id="connection-status" class="connection-status connecting">
+    <span class="dot"></span>
+    <span class="text">Connecting...</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
