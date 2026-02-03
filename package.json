@@ -24,7 +24,8 @@
     "start.bat",
     "start.sh",
     "install.sh",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "repository": {
     "type": "git",
@@ -52,7 +53,10 @@
     "cli",
     "developer-tools"
   ],
-  "author": "Machine King Labs",
+  "author": {
+    "name": "Machine King Labs",
+    "url": "https://github.com/taskmasterpeace"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=16.0.0"
