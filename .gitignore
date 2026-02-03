@@ -7,17 +7,52 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
+._*
 
-# IDE
+# IDE / Editor
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # Logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Environment
 .env
 .env.local
+.env.*.local
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+
+# Optional npm cache
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Package locks (optional - uncomment if you don't want to track)
+# package-lock.json
+# yarn.lock
+
+# User-specific project config
+projects.json
