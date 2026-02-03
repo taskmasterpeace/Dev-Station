@@ -1,5 +1,9 @@
 # DevStation
 
+[![npm version](https://img.shields.io/npm/v/devstation.svg)](https://www.npmjs.com/package/devstation)
+[![npm downloads](https://img.shields.io/npm/dm/devstation.svg)](https://www.npmjs.com/package/devstation)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 A lightweight, cross-platform dashboard for managing multiple development servers, Docker containers, and databases from one place.
 
 ![DevStation Dashboard](screenshots/dashboard.png)
