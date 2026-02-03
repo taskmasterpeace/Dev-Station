@@ -466,6 +466,104 @@ app.get('/api/drives', (req, res) => {
   res.json({ success: true, drives });
 });
 
+// Docker API
+app.get('/api/docker', async (req, res) => {
+  const { exec } = require('child_process');
+
+  try {
+    const output = await new Promise((resolve, reject) => {
+      exec('docker ps -a --format "{{.ID}}|{{.Names}}|{{.Image}}|{{.Status}}|{{.State}}|{{.Ports}}"',
+        { encoding: 'utf8' }, (err, stdout, stderr) => {
+          if (err) reject(new Error(stderr || err.message));
+          else resolve(stdout);
+        });
+    });
+
+    const containers = output.trim().split('\n').filter(l => l).map(line => {
+      const [id, name, image, status, state, ports] = line.split('|');
+      return { id, name, image, status, state, ports: ports || '' };
+    });
+
+    res.json({ success: true, data: containers });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/docker/:action/:id', async (req, res) => {
+  const { exec } = require('child_process');
+  const { action, id } = req.params;
+
+  const commands = {
+    start: `docker start ${id}`,
+    stop: `docker stop ${id}`,
+    restart: `docker restart ${id}`,
+    remove: `docker rm -f ${id}`
+  };
+
+  if (!commands[action]) {
+    return res.status(400).json({ success: false, error: 'Invalid action' });
+  }
+
+  try {
+    await new Promise((resolve, reject) => {
+      exec(commands[action], { encoding: 'utf8' }, (err, stdout, stderr) => {
+        if (err) reject(new Error(stderr || err.message));
+        else resolve(stdout);
+      });
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/docker/logs/:id', async (req, res) => {
+  const { exec } = require('child_process');
+
+  try {
+    const logs = await new Promise((resolve, reject) => {
+      exec(`docker logs --tail 100 ${req.params.id}`,
+        { encoding: 'utf8', maxBuffer: 5 * 1024 * 1024 }, (err, stdout, stderr) => {
+          if (err) reject(new Error(stderr || err.message));
+          else resolve(stdout + stderr);
+        });
+    });
+    res.json({ success: true, logs });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+// Databases API
+app.get('/api/databases', async (req, res) => {
+  const net = require('net');
+
+  const dbPorts = [
+    { type: 'postgresql', name: 'PostgreSQL', port: 5432 },
+    { type: 'mongodb', name: 'MongoDB', port: 27017 },
+    { type: 'redis', name: 'Redis', port: 6379 },
+    { type: 'mysql', name: 'MySQL', port: 3306 },
+  ];
+
+  const results = await Promise.all(dbPorts.map(db => new Promise(resolve => {
+    const socket = new net.Socket();
+    socket.setTimeout(200);
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve({ ...db, running: true });
+    });
+    socket.once('error', () => resolve({ ...db, running: false }));
+    socket.once('timeout', () => {
+      socket.destroy();
+      resolve({ ...db, running: false });
+    });
+    socket.connect(db.port, '127.0.0.1');
+  })));
+
+  res.json({ success: true, data: results });
+});
+
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\nShutting down...');
@@ -483,7 +581,7 @@ process.on('SIGTERM', async () => {
 server.listen(PORT, () => {
   console.log(`
   ╔═══════════════════════════════════════════╗
-  ║         DEV DASHBOARD RUNNING             ║
+  ║        ⚡ DEVSTATION RUNNING              ║
   ╠═══════════════════════════════════════════╣
   ║  URL: http://localhost:${PORT}               ║
   ║  API: http://localhost:${PORT}/api/status    ║

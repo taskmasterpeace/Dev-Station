@@ -1,5 +1,8 @@
 // State
 let projects = [];
+let dockerContainers = [];
+let databases = [];
+let currentTab = 'servers';
 let ws = null;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 10;
@@ -16,6 +19,211 @@ document.addEventListener('DOMContentLoaded', () => {
   connectWebSocket();
   setupKeyboardShortcuts();
 });
+
+// Tab Management
+function switchTab(tab) {
+  currentTab = tab;
+
+  // Update tab buttons
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+
+  // Update tab panels
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === `tab-${tab}`);
+  });
+
+  // Load data for the tab
+  if (tab === 'docker') {
+    loadDockerContainers();
+  } else if (tab === 'databases') {
+    loadDatabases();
+  }
+}
+
+// Docker Management
+async function loadDockerContainers() {
+  const container = document.getElementById('docker-containers');
+  const empty = document.getElementById('docker-empty');
+
+  empty.innerHTML = '<h2>Loading Docker containers...</h2><p>Checking Docker...</p>';
+  empty.style.display = 'block';
+  container.innerHTML = '';
+
+  try {
+    const res = await fetch('/api/docker');
+    const data = await res.json();
+
+    if (!data.success) {
+      empty.innerHTML = `<h2>Docker not available</h2><p>${data.error || 'Make sure Docker Desktop is running'}</p>`;
+      return;
+    }
+
+    dockerContainers = data.data;
+
+    if (dockerContainers.length === 0) {
+      empty.innerHTML = '<h2>No containers found</h2><p>No Docker containers are running or stopped</p>';
+      return;
+    }
+
+    empty.style.display = 'none';
+    container.innerHTML = dockerContainers.map(renderDockerCard).join('');
+  } catch (err) {
+    empty.innerHTML = `<h2>Error loading Docker</h2><p>${err.message}</p>`;
+  }
+}
+
+function renderDockerCard(c) {
+  const isRunning = c.state === 'running';
+  const statusClass = isRunning ? 'running' : 'stopped';
+
+  return `
+    <div class="project-card" data-id="${c.id}">
+      <div class="project-header">
+        <div class="project-info">
+          <div class="project-title">
+            <span class="status-dot ${statusClass}"></span>
+            <h3>${escapeHtml(c.name)}</h3>
+            ${isRunning ? `<span class="uptime">${escapeHtml(c.status)}</span>` : ''}
+          </div>
+          <div class="project-meta">
+            <span>🐳 ${escapeHtml(c.image)}</span>
+            ${c.ports ? `<span class="project-port">${escapeHtml(c.ports)}</span>` : ''}
+          </div>
+        </div>
+        <div class="project-actions">
+          ${isRunning ? `
+            <button class="small" onclick="dockerAction('stop', '${c.id}')">Stop</button>
+            <button class="small" onclick="dockerAction('restart', '${c.id}')">Restart</button>
+          ` : `
+            <button class="success small" onclick="dockerAction('start', '${c.id}')">Start</button>
+          `}
+          <button class="small" onclick="toggleDockerLogs('${c.id}')">Logs</button>
+          <button class="small danger" onclick="dockerAction('remove', '${c.id}')">&times;</button>
+        </div>
+      </div>
+      <div id="docker-logs-${c.id}" class="project-logs">
+        <div class="logs-header">
+          <span>Container Logs</span>
+        </div>
+        <div id="docker-logs-content-${c.id}" class="logs-content"></div>
+      </div>
+    </div>
+  `;
+}
+
+async function dockerAction(action, containerId) {
+  const btn = event?.target;
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/docker/${action}/${containerId}`, { method: 'POST' });
+    const data = await res.json();
+
+    if (data.success) {
+      toast(`Container ${action}ed`, 'success');
+      await loadDockerContainers();
+    } else {
+      toast(data.error || `Failed to ${action}`, 'error');
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+
+  if (btn) btn.disabled = false;
+}
+
+async function toggleDockerLogs(containerId) {
+  const logsEl = document.getElementById(`docker-logs-${containerId}`);
+  const isOpen = logsEl.classList.contains('open');
+
+  if (!isOpen) {
+    const content = document.getElementById(`docker-logs-content-${containerId}`);
+    content.innerHTML = '<div class="log-line">Loading logs...</div>';
+
+    try {
+      const res = await fetch(`/api/docker/logs/${containerId}`);
+      const data = await res.json();
+
+      if (data.success) {
+        content.innerHTML = data.logs.split('\n').map(line =>
+          `<div class="log-line">${escapeHtml(line)}</div>`
+        ).join('');
+        content.scrollTop = content.scrollHeight;
+      } else {
+        content.innerHTML = `<div class="log-line stderr">${data.error}</div>`;
+      }
+    } catch (err) {
+      content.innerHTML = `<div class="log-line stderr">${err.message}</div>`;
+    }
+  }
+
+  logsEl.classList.toggle('open');
+}
+
+// Database Management
+async function loadDatabases() {
+  const container = document.getElementById('databases');
+  const empty = document.getElementById('databases-empty');
+
+  empty.innerHTML = '<h2>Scanning for databases...</h2><p>Looking for PostgreSQL, MongoDB, Redis, MySQL</p>';
+  empty.style.display = 'block';
+  container.innerHTML = '';
+
+  try {
+    const res = await fetch('/api/databases');
+    const data = await res.json();
+
+    if (!data.success) {
+      empty.innerHTML = `<h2>Error scanning</h2><p>${data.error}</p>`;
+      return;
+    }
+
+    databases = data.data;
+
+    if (databases.length === 0) {
+      empty.innerHTML = '<h2>No databases found</h2><p>No PostgreSQL, MongoDB, Redis, or MySQL detected</p>';
+      return;
+    }
+
+    empty.style.display = 'none';
+    container.innerHTML = databases.map(renderDatabaseCard).join('');
+  } catch (err) {
+    empty.innerHTML = `<h2>Error</h2><p>${err.message}</p>`;
+  }
+}
+
+function renderDatabaseCard(db) {
+  const statusClass = db.running ? 'running' : 'stopped';
+  const icons = { postgresql: '🐘', mongodb: '🍃', redis: '🔴', mysql: '🐬' };
+  const icon = icons[db.type] || '🗄️';
+
+  return `
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-info">
+          <div class="project-title">
+            <span class="status-dot ${statusClass}"></span>
+            <h3>${icon} ${escapeHtml(db.name)}</h3>
+          </div>
+          <div class="project-meta">
+            <span>${escapeHtml(db.type)}</span>
+            <span class="project-port">:${db.port}</span>
+            ${db.pid ? `<span>PID: ${db.pid}</span>` : ''}
+          </div>
+        </div>
+        <div class="project-actions">
+          ${db.running ? `
+            <span class="scan-status-badge managed">Running</span>
+          ` : `
+            <span class="scan-status-badge" style="background:#333;color:#888;">Stopped</span>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+}
 
 // Auto-refresh status periodically to catch external processes
 setInterval(async () => {

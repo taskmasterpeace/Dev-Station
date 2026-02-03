@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dev Dashboard</title>
+  <title>DevStation</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>DEV DASHBOARD</h1>
+    <h1>⚡ DEVSTATION</h1>
     <div class="header-actions">
       <button onclick="openScanModal()" title="Scan for running dev servers">🔍 Scan Ports</button>
       <button onclick="startAll()" title="Start All (Shift+S)">Start All</button>
@@ -17,15 +17,46 @@
     </div>
   </header>
 
+  <nav class="tabs">
+    <button class="tab active" data-tab="servers" onclick="switchTab('servers')">Dev Servers</button>
+    <button class="tab" data-tab="docker" onclick="switchTab('docker')">🐳 Docker</button>
+    <button class="tab" data-tab="databases" onclick="switchTab('databases')">🗄️ Databases</button>
+  </nav>
+
   <main>
-    <div id="projects" class="projects">
-      <!-- Projects rendered here -->
+    <!-- Dev Servers Tab -->
+    <div id="tab-servers" class="tab-panel active">
+      <div id="projects" class="projects">
+        <!-- Projects rendered here -->
+      </div>
+
+      <div id="empty-state" class="empty-state" style="display: none;">
+        <h2>No projects configured</h2>
+        <p>Add your first dev server to get started</p>
+        <button class="primary" onclick="openAddModal()">+ Add Project</button>
+      </div>
     </div>
 
-    <div id="empty-state" class="empty-state" style="display: none;">
-      <h2>No projects configured</h2>
-      <p>Add your first dev server to get started</p>
-      <button class="primary" onclick="openAddModal()">+ Add Project</button>
+    <!-- Docker Tab -->
+    <div id="tab-docker" class="tab-panel">
+      <div id="docker-containers" class="projects">
+        <!-- Docker containers rendered here -->
+      </div>
+      <div id="docker-empty" class="empty-state">
+        <h2>Loading Docker containers...</h2>
+        <p>Make sure Docker Desktop is running</p>
+      </div>
+    </div>
+
+    <!-- Databases Tab -->
+    <div id="tab-databases" class="tab-panel">
+      <div id="databases" class="projects">
+        <!-- Databases rendered here -->
+      </div>
+      <div id="databases-empty" class="empty-state">
+        <h2>Scanning for databases...</h2>
+        <p>Looking for PostgreSQL, MongoDB, Redis, MySQL</p>
+      </div>
     </div>
   </main>
 

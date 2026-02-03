@@ -298,7 +298,7 @@ async function scanPorts() {
 
 function showHelp() {
   console.log(`
-Dev Dashboard CLI
+⚡ DevStation CLI
 
 Usage:
   node cli.js <command> [id] [--json]

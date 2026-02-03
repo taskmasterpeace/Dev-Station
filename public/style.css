@@ -133,6 +133,49 @@ button.open-btn:hover {
   background: #2563eb;
 }
 
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--card-border);
+  padding: 0 2rem;
+  position: sticky;
+  top: 57px;
+  z-index: 99;
+}
+
+.tab {
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  border-radius: 0;
+}
+
+.tab:hover {
+  color: var(--text);
+  background: transparent;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
 /* Main content */
 main {
   padding: 1.5rem 2rem;

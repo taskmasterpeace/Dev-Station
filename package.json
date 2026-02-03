@@ -1,7 +1,7 @@
 {
-  "name": "dev-dashboard",
+  "name": "devstation",
   "version": "1.0.0",
-  "description": "Lightweight web UI to manage multiple dev servers",
+  "description": "Dev workstation for managing dev servers, Docker containers, and databases",
   "main": "server.js",
   "bin": {
     "devd": "./cli.js"
