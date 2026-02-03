@@ -20,7 +20,24 @@ const { exec } = require('child_process');
 
 const BASE_URL = 'http://localhost:4000';
 
-const [,, command, arg] = process.argv;
+// Parse args - support --json flag anywhere
+const args = process.argv.slice(2);
+const jsonMode = args.includes('--json') || args.includes('-j');
+const filteredArgs = args.filter(a => a !== '--json' && a !== '-j');
+const [command, arg] = filteredArgs;
+
+// JSON output helper
+function output(data, type = 'success') {
+  if (jsonMode) {
+    console.log(JSON.stringify(data));
+  } else if (type === 'error') {
+    console.error(typeof data === 'string' ? data : data.error || 'Error');
+  }
+}
+
+function exitCode(success) {
+  process.exit(success ? 0 : 1);
+}
 
 async function api(method, path) {
   return new Promise((resolve, reject) => {
@@ -81,12 +98,15 @@ async function showStatus(id) {
   if (id) {
     const res = await api('GET', `/api/status/${id}`);
     if (!res.success) {
+      if (jsonMode) { output(res); exitCode(false); return; }
       console.error(`ERROR: ${res.error}`);
       process.exit(1);
     }
+    if (jsonMode) { output(res); return; }
+
     const p = res.data;
     console.log(`${formatStatus(p.status)} ${p.name} (${p.id})`);
-    console.log(`   Status:  ${p.status}`);
+    console.log(`   Status:  ${p.status}${p.externalPid ? ' (external)' : ''}`);
     console.log(`   Port:    ${p.port || '-'}`);
     console.log(`   Folder:  ${p.folder}`);
     console.log(`   Command: ${p.command}`);
@@ -101,9 +121,11 @@ async function showStatus(id) {
   } else {
     const res = await api('GET', '/api/status');
     if (!res.success) {
+      if (jsonMode) { output(res); exitCode(false); return; }
       console.error('ERROR: Failed to get status');
       process.exit(1);
     }
+    if (jsonMode) { output(res); return; }
 
     if (res.data.length === 0) {
       console.log('No projects configured');
@@ -116,16 +138,18 @@ async function showStatus(id) {
 
     for (const p of res.data) {
       const port = p.port ? `:${p.port}` : '     ';
+      const statusText = p.externalPid ? 'external' : p.status;
       const uptime = p.status === 'running' ? ` (${formatUptime(p.uptime)})` : '';
-      console.log(`  ${formatStatus(p.status)} ${p.id.padEnd(14)} ${p.status.padEnd(10)} ${port.padEnd(6)}  ${p.name}${uptime}`);
+      console.log(`  ${formatStatus(p.status)} ${p.id.padEnd(14)} ${statusText.padEnd(10)} ${port.padEnd(6)}  ${p.name}${uptime}`);
     }
     console.log('');
   }
 }
 
 async function startProject(id) {
-  console.log(`Starting ${id}...`);
+  if (!jsonMode) console.log(`Starting ${id}...`);
   const res = await api('POST', `/api/start/${id}`);
+  if (jsonMode) { output({ success: res.success, id, pid: res.pid, error: res.error }); exitCode(res.success); return; }
   if (res.success) {
     console.log(`✓ Started ${id} (PID: ${res.pid})`);
   } else {
@@ -135,8 +159,9 @@ async function startProject(id) {
 }
 
 async function stopProject(id) {
-  console.log(`Stopping ${id}...`);
+  if (!jsonMode) console.log(`Stopping ${id}...`);
   const res = await api('POST', `/api/stop/${id}`);
+  if (jsonMode) { output({ success: res.success, id, error: res.error }); exitCode(res.success); return; }
   if (res.success) {
     console.log(`✓ Stopped ${id}`);
   } else {
@@ -146,8 +171,9 @@ async function stopProject(id) {
 }
 
 async function restartProject(id) {
-  console.log(`Restarting ${id}...`);
+  if (!jsonMode) console.log(`Restarting ${id}...`);
   const res = await api('POST', `/api/restart/${id}`);
+  if (jsonMode) { output({ success: res.success, id, pid: res.pid, error: res.error }); exitCode(res.success); return; }
   if (res.success) {
     console.log(`✓ Restarted ${id} (PID: ${res.pid})`);
   } else {
@@ -159,9 +185,11 @@ async function restartProject(id) {
 async function showLogs(id) {
   const res = await api('GET', `/api/logs/${id}?lines=50`);
   if (!res.success) {
+    if (jsonMode) { output(res); exitCode(false); return; }
     console.error(`ERROR: ${res.error || 'Failed to get logs'}`);
     process.exit(1);
   }
+  if (jsonMode) { output(res); return; }
 
   if (res.data.length === 0) {
     console.log('No logs available');
@@ -177,9 +205,11 @@ async function showLogs(id) {
 async function listProjects() {
   const res = await api('GET', '/api/status');
   if (!res.success) {
+    if (jsonMode) { output(res); exitCode(false); return; }
     console.error('ERROR: Failed to get projects');
     process.exit(1);
   }
+  if (jsonMode) { output({ success: true, ids: res.data.map(p => p.id) }); return; }
 
   for (const p of res.data) {
     console.log(p.id);
@@ -208,8 +238,9 @@ async function openProject(id) {
 }
 
 async function startAll() {
-  console.log('Starting all projects...');
+  if (!jsonMode) console.log('Starting all projects...');
   const res = await api('POST', '/api/start-all');
+  if (jsonMode) { output(res); exitCode(res.success); return; }
   if (res.success) {
     console.log('✓ All projects started');
   } else {
@@ -219,8 +250,9 @@ async function startAll() {
 }
 
 async function stopAll() {
-  console.log('Stopping all projects...');
+  if (!jsonMode) console.log('Stopping all projects...');
   const res = await api('POST', '/api/stop-all');
+  if (jsonMode) { output(res); exitCode(res.success); return; }
   if (res.success) {
     console.log('✓ All projects stopped');
   } else {
@@ -230,12 +262,14 @@ async function stopAll() {
 }
 
 async function scanPorts() {
-  console.log('Scanning for running dev servers...\n');
+  if (!jsonMode) console.log('Scanning for running dev servers...\n');
   const res = await api('GET', '/api/scan');
   if (!res.success) {
+    if (jsonMode) { output(res); exitCode(false); return; }
     console.error('ERROR: Failed to scan');
     process.exit(1);
   }
+  if (jsonMode) { output(res); return; }
 
   if (res.data.length === 0) {
     console.log('No dev servers found on common ports');
@@ -267,7 +301,7 @@ function showHelp() {
 Dev Dashboard CLI
 
 Usage:
-  node cli.js <command> [id]
+  node cli.js <command> [id] [--json]
 
 Commands:
   status [id]     Show status of all projects or a specific one
@@ -275,18 +309,21 @@ Commands:
   stop <id>       Stop a project
   restart <id>    Restart a project
   logs <id>       Show recent logs (last 50 lines)
-  list            List all project IDs (useful for scripting)
+  list            List all project IDs
   open <id>       Open project in browser
   start-all       Start all projects
   stop-all        Stop all projects
   scan            Scan for running dev servers (managed & external)
   help            Show this help
 
+Options:
+  --json, -j      Output in JSON format (for AI agents/scripts)
+
 Examples:
   node cli.js status
   node cli.js start hyh
-  node cli.js logs ad-lab
-  node cli.js scan
+  node cli.js status --json
+  node cli.js scan -j
 `);
 }
 
