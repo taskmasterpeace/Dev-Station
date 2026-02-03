@@ -6,17 +6,22 @@ const fs = require('fs');
 const ProcessManager = require('./lib/process-manager');
 const config = require('./lib/config');
 
-const PORT = 4000;
+const PORT = process.env.DEVSTATION_PORT || 4000;
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+// Handle pkg bundling - detect if running as pkg executable
+const isPkg = typeof process.pkg !== 'undefined';
+const basePath = isPkg ? path.dirname(process.execPath) : __dirname;
+const publicPath = isPkg ? path.join(basePath, 'public') : path.join(__dirname, 'public');
 
 // Process manager instance
 const pm = new ProcessManager();
 
 // Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(publicPath));
 
 // WebSocket connections
 const clients = new Set();

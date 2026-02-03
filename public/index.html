@@ -14,6 +14,7 @@
       <button onclick="startAll()" title="Start All (Shift+S)">Start All</button>
       <button onclick="stopAll()" title="Stop All (Shift+X)">Stop All</button>
       <button class="primary" onclick="openAddModal()">+ Add Project</button>
+      <button class="settings-btn" onclick="openSettingsModal()" title="Settings">⚙️</button>
     </div>
   </header>
 
@@ -144,6 +145,66 @@
       <div class="modal-footer">
         <button type="button" onclick="refreshScan()">↻ Refresh</button>
         <button type="button" onclick="closeScanModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal-overlay" onclick="closeSettingsModal(event)">
+    <div class="modal settings-modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2>⚙️ Settings</h2>
+        <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="setting-theme">Theme</label>
+          <select id="setting-theme" onchange="updateSetting('theme', this.value)">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="setting-refresh">Auto-refresh interval</label>
+          <select id="setting-refresh" onchange="updateSetting('refreshInterval', this.value)">
+            <option value="5000">5 seconds</option>
+            <option value="10000">10 seconds (default)</option>
+            <option value="30000">30 seconds</option>
+            <option value="60000">1 minute</option>
+            <option value="0">Disabled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="setting-log-lines">Default log lines</label>
+          <select id="setting-log-lines" onchange="updateSetting('logLines', this.value)">
+            <option value="50">50 lines</option>
+            <option value="100">100 lines</option>
+            <option value="200">200 lines (default)</option>
+            <option value="500">500 lines</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="setting-autostart">Auto-start projects on launch</label>
+          <select id="setting-autostart" onchange="updateSetting('autoStart', this.value)">
+            <option value="false">Disabled (default)</option>
+            <option value="true">Enabled</option>
+          </select>
+        </div>
+        <div class="settings-section">
+          <h4>Server Info</h4>
+          <div class="setting-info">
+            <span>Dashboard Port:</span>
+            <span class="mono">4000</span>
+          </div>
+          <div class="setting-info">
+            <span>Version:</span>
+            <span class="mono">1.0.0</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="resetSettings()">Reset to Defaults</button>
+        <button type="button" class="primary" onclick="closeSettingsModal()">Done</button>
       </div>
     </div>
   </div>

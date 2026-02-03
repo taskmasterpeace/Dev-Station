@@ -4,19 +4,33 @@
   "description": "Dev workstation for managing dev servers, Docker containers, and databases",
   "main": "server.js",
   "bin": {
+    "devstation": "./server.js",
     "devd": "./cli.js"
   },
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "cli": "node cli.js"
+    "cli": "node cli.js",
+    "build": "npm run build:win && npm run build:linux && npm run build:mac",
+    "build:win": "pkg . --target node18-win-x64 --output dist/devstation-win.exe",
+    "build:linux": "pkg . --target node18-linux-x64 --output dist/devstation-linux",
+    "build:mac": "pkg . --target node18-macos-x64 --output dist/devstation-macos"
   },
-  "keywords": ["dev-server", "dashboard", "process-manager"],
+  "pkg": {
+    "scripts": ["lib/**/*.js"],
+    "assets": ["public/**/*", "projects.json"],
+    "targets": ["node18-win-x64", "node18-linux-x64", "node18-macos-x64"],
+    "outputPath": "dist"
+  },
+  "keywords": ["dev-server", "dashboard", "process-manager", "docker", "devtools"],
   "author": "Machine King Labs",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
     "ws": "^8.14.2",
     "tree-kill": "^1.2.2"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
   }
 }

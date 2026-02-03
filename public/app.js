@@ -6,6 +6,26 @@ let currentTab = 'servers';
 let ws = null;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 10;
+let refreshInterval = null;
+
+// Default settings
+const defaultSettings = {
+  theme: 'dark',
+  refreshInterval: 10000,
+  logLines: 200,
+  autoStart: false
+};
+
+// Load settings from localStorage
+let settings = { ...defaultSettings };
+try {
+  const saved = localStorage.getItem('devstation-settings');
+  if (saved) {
+    settings = { ...defaultSettings, ...JSON.parse(saved) };
+  }
+} catch (e) {
+  console.warn('Failed to load settings:', e);
+}
 
 // DOM Elements
 const projectsContainer = document.getElementById('projects');
@@ -16,8 +36,10 @@ const connectionStatus = document.getElementById('connection-status');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  applySettings();
   connectWebSocket();
   setupKeyboardShortcuts();
+  setupAutoRefresh();
 });
 
 // Tab Management
@@ -226,16 +248,25 @@ function renderDatabaseCard(db) {
 }
 
 // Auto-refresh status periodically to catch external processes
-setInterval(async () => {
-  try {
-    const res = await fetch('/api/status');
-    const data = await res.json();
-    if (data.success) {
-      projects = data.data;
-      renderProjects();
-    }
-  } catch {}
-}, 10000); // Every 10 seconds
+function setupAutoRefresh() {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
+
+  if (settings.refreshInterval > 0) {
+    refreshInterval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        if (data.success) {
+          projects = data.data;
+          renderProjects();
+        }
+      } catch {}
+    }, settings.refreshInterval);
+  }
+}
 
 // WebSocket Connection
 function connectWebSocket() {
@@ -585,7 +616,7 @@ function toggleLogs(id) {
 }
 
 async function fetchLogs(id) {
-  const res = await fetch(`/api/logs/${id}?lines=200`);
+  const res = await fetch(`/api/logs/${id}?lines=${settings.logLines}`);
   const data = await res.json();
   const container = document.getElementById(`logs-content-${id}`);
 
@@ -1029,4 +1060,75 @@ function selectFolder(path) {
 function selectCurrentFolder() {
   document.getElementById('project-folder').value = currentBrowsePath;
   closeFolderPicker();
+}
+
+// Settings
+function applySettings() {
+  // Apply theme
+  if (settings.theme === 'light') {
+    document.documentElement.classList.add('light');
+  } else {
+    document.documentElement.classList.remove('light');
+  }
+}
+
+function openSettingsModal() {
+  // Load current values into form
+  document.getElementById('setting-theme').value = settings.theme;
+  document.getElementById('setting-refresh').value = settings.refreshInterval;
+  document.getElementById('setting-log-lines').value = settings.logLines;
+  document.getElementById('setting-autostart').value = settings.autoStart.toString();
+
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettingsModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function updateSetting(key, value) {
+  // Convert types
+  if (key === 'refreshInterval' || key === 'logLines') {
+    value = parseInt(value);
+  } else if (key === 'autoStart') {
+    value = value === 'true';
+  }
+
+  settings[key] = value;
+  saveSettings();
+
+  // Apply changes immediately
+  if (key === 'theme') {
+    applySettings();
+    toast(`Theme: ${value}`, 'info');
+  } else if (key === 'refreshInterval') {
+    setupAutoRefresh();
+    toast(`Auto-refresh: ${value === 0 ? 'disabled' : (value / 1000) + 's'}`, 'info');
+  }
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem('devstation-settings', JSON.stringify(settings));
+  } catch (e) {
+    console.warn('Failed to save settings:', e);
+  }
+}
+
+function resetSettings() {
+  if (!confirm('Reset all settings to defaults?')) return;
+
+  settings = { ...defaultSettings };
+  saveSettings();
+  applySettings();
+  setupAutoRefresh();
+
+  // Update form
+  document.getElementById('setting-theme').value = settings.theme;
+  document.getElementById('setting-refresh').value = settings.refreshInterval;
+  document.getElementById('setting-log-lines').value = settings.logLines;
+  document.getElementById('setting-autostart').value = settings.autoStart.toString();
+
+  toast('Settings reset to defaults', 'info');
 }

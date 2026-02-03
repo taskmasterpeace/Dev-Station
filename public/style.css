@@ -830,3 +830,296 @@ main {
   background: rgba(34, 197, 94, 0.15);
   color: var(--success);
 }
+
+/* Settings */
+.settings-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 1.1rem;
+  background: transparent;
+  border: 1px solid var(--card-border);
+}
+
+.settings-btn:hover {
+  background: #252525;
+}
+
+.settings-modal {
+  max-width: 400px;
+}
+
+.settings-modal select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #111;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.settings-modal select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.settings-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--card-border);
+}
+
+.settings-section h4 {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.setting-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding: 0.35rem 0;
+}
+
+.setting-info .mono {
+  font-family: monospace;
+  color: var(--primary);
+}
+
+/* Light theme */
+:root.light {
+  --bg: #f5f5f5;
+  --card-bg: #ffffff;
+  --card-border: #e0e0e0;
+  --text: #1a1a1a;
+  --muted: #666;
+}
+
+:root.light body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+:root.light header,
+:root.light .tabs {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+}
+
+:root.light .project-card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+}
+
+:root.light button {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  color: var(--text);
+}
+
+:root.light button:hover {
+  background: #eee;
+}
+
+:root.light .modal {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+}
+
+:root.light .form-group input,
+:root.light .settings-modal select,
+:root.light .current-path input {
+  background: #f0f0f0;
+  border-color: var(--card-border);
+  color: var(--text);
+}
+
+:root.light .project-logs {
+  background: #f8f8f8;
+}
+
+:root.light .logs-header {
+  background: #f0f0f0;
+}
+
+:root.light .logs-content {
+  background: #fafafa;
+}
+
+:root.light .log-line.stdout {
+  color: #333;
+}
+
+:root.light .connection-status,
+:root.light .toast {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+}
+
+:root.light .scan-item {
+  background: #f8f8f8;
+}
+
+:root.light .scan-pid {
+  background: #e8e8e8;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .header-actions button {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .tabs {
+    padding: 0 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  main {
+    padding: 1rem;
+  }
+
+  .project-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .project-actions {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .project-actions button {
+    flex: 1;
+    min-width: 60px;
+  }
+
+  .project-meta {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .modal {
+    max-width: 95%;
+    margin: 1rem;
+  }
+
+  .folder-picker-modal {
+    max-height: 90vh;
+  }
+
+  .scan-modal {
+    max-width: 95%;
+  }
+
+  .scan-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .scan-item-info {
+    width: 100%;
+  }
+
+  .scan-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .logs-content {
+    font-size: 0.7rem;
+    height: 200px;
+  }
+
+  .connection-status {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .toast-container {
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: 3rem;
+  }
+
+  .toast {
+    min-width: auto;
+    font-size: 0.8rem;
+  }
+
+  .settings-modal {
+    max-width: 95%;
+  }
+
+  .form-group label {
+    font-size: 0.8rem;
+  }
+
+  .form-group input,
+  .settings-modal select {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1.1rem;
+  }
+
+  .header-actions button {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .project-title h3 {
+    font-size: 1rem;
+  }
+
+  .uptime, .crashed-badge, .external-badge {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.3rem;
+  }
+
+  .project-meta {
+    font-size: 0.7rem;
+  }
+
+  .project-port {
+    font-size: 0.75rem;
+  }
+
+  button.small {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+  }
+}
