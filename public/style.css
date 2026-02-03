@@ -46,9 +46,10 @@ header h1 {
   gap: 0.5rem;
 }
 
-header h1::before {
-  content: '>';
-  color: var(--primary);
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  vertical-align: middle;
 }
 
 .header-actions {
