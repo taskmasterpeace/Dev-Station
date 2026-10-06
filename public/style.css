@@ -448,6 +448,67 @@ main {
   border-top: 1px solid var(--card-border);
 }
 
+/* Env vars editor */
+.env-vars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.env-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.env-row input {
+  flex: 1;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.85rem;
+  font-family: 'Consolas', 'Monaco', monospace;
+  background: #111;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.env-row input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.env-row input.env-key {
+  flex: 0.4;
+  text-transform: uppercase;
+}
+
+.env-row input.env-value {
+  flex: 0.6;
+}
+
+.env-row .env-remove {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.env-badge {
+  font-size: 0.7rem;
+  font-family: monospace;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--primary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+:root.light .env-row input {
+  background: #f0f0f0;
+  border-color: var(--card-border);
+  color: var(--text);
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;

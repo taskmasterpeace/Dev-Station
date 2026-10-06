@@ -7,10 +7,11 @@ const fs = require('fs');
 const ProcessManager = require('./lib/process-manager');
 const config = require('./lib/config');
 
-const PORT = process.env.DEVSTATION_PORT || 4000;
+const PREFERRED_PORT = parseInt(process.env.DEVSTATION_PORT, 10) || 4000;
+const PORT_RANGE = 50; // Try up to 50 ports from the preferred port
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ noServer: true });
 
 // Handle pkg bundling - detect if running as pkg executable
 const isPkg = typeof process.pkg !== 'undefined';
@@ -154,13 +155,13 @@ app.post('/api/logs/:id/clear', (req, res) => {
 
 // Add new project
 app.post('/api/projects', (req, res) => {
-  const { id, name, folder, command, port } = req.body;
+  const { id, name, folder, command, port, env } = req.body;
 
   if (!id || !name || !folder || !command) {
     return res.status(400).json({ success: false, error: 'Missing required fields' });
   }
 
-  const result = config.addProject({ id, name, folder, command, port: port || null });
+  const result = config.addProject({ id, name, folder, command, port: port || null, env: env || {} });
 
   if (result.success) {
     broadcast({ type: 'project_added', project: config.getProject(id) });
@@ -583,14 +584,72 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// Start server
-server.listen(PORT, () => {
-  console.log(`
+// Port file so CLI and other tools can discover the active port
+const portFilePath = path.join(__dirname, '.devstation-port');
+
+function writePortFile(port) {
+  fs.writeFileSync(portFilePath, String(port), 'utf8');
+}
+
+function clearPortFile() {
+  try { fs.unlinkSync(portFilePath); } catch {}
+}
+
+// Find an available port by probing with a temporary server
+const net = require('net');
+
+function findOpenPort(startPort, range) {
+  return new Promise((resolve, reject) => {
+    let port = startPort;
+    const maxPort = startPort + range;
+
+    function tryPort() {
+      if (port >= maxPort) {
+        return reject(new Error(`No open port found in range ${startPort}-${maxPort - 1}`));
+      }
+      const tester = net.createServer();
+      tester.once('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          console.log(`Port ${port} in use, trying ${port + 1}...`);
+          port++;
+          tryPort();
+        } else {
+          reject(err);
+        }
+      });
+      tester.listen(port, () => {
+        tester.close(() => resolve(port));
+      });
+    }
+
+    tryPort();
+  });
+}
+
+// Clean up port file on exit
+process.on('exit', clearPortFile);
+
+findOpenPort(PREFERRED_PORT, PORT_RANGE).then((port) => {
+  server.listen(port, () => {
+    // Attach WebSocket upgrade handler now that we have a valid port
+    server.on('upgrade', (request, socket, head) => {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    });
+
+    writePortFile(port);
+    const pad = (s, len) => s + ' '.repeat(Math.max(0, len - s.length));
+    console.log(`
   ╔═══════════════════════════════════════════╗
   ║        ⚡ DEVSTATION RUNNING              ║
   ╠═══════════════════════════════════════════╣
-  ║  URL: http://localhost:${PORT}               ║
-  ║  API: http://localhost:${PORT}/api/status    ║
+  ║  ${pad(`URL: http://localhost:${port}`, 40)}║
+  ║  ${pad(`API: http://localhost:${port}/api/status`, 40)}║
   ╚═══════════════════════════════════════════╝
-  `);
+    `);
+  });
+}).catch((err) => {
+  console.error(err.message);
+  process.exit(1);
 });

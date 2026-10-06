@@ -56,3 +56,6 @@ coverage/
 
 # User-specific project config
 projects.json
+
+# Runtime port file
+.devstation-port

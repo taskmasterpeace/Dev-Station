@@ -17,8 +17,19 @@
 
 const http = require('http');
 const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
-const BASE_URL = 'http://localhost:4000';
+function getBaseUrl() {
+  const portFile = path.join(__dirname, '.devstation-port');
+  try {
+    const port = parseInt(fs.readFileSync(portFile, 'utf8').trim(), 10);
+    if (port > 0) return `http://localhost:${port}`;
+  } catch {}
+  return `http://localhost:${parseInt(process.env.DEVSTATION_PORT, 10) || 4000}`;
+}
+
+const BASE_URL = getBaseUrl();
 
 // Parse args - support --json flag anywhere
 const args = process.argv.slice(2);

@@ -96,6 +96,11 @@
             <label for="project-port">Port (optional)</label>
             <input type="number" id="project-port" placeholder="3000">
           </div>
+          <div class="form-group">
+            <label>Environment Variables</label>
+            <div id="env-vars-list" class="env-vars-list"></div>
+            <button type="button" class="small" onclick="addEnvRow()">+ Add Variable</button>
+          </div>
         </form>
       </div>
       <div class="modal-footer">

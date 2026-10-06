@@ -433,6 +433,7 @@ function renderProjectCardHTML(p) {
           <div class="project-meta">
             <span>${escapeHtml(p.folder)}</span>
             ${p.port ? `<span class="project-port">:${p.port}</span>` : ''}
+            ${p.env && Object.keys(p.env).length > 0 ? `<span class="env-badge">${Object.keys(p.env).length} env var${Object.keys(p.env).length > 1 ? 's' : ''}</span>` : ''}
           </div>
           ${warnings ? `<div class="warnings">${warnings}</div>` : ''}
         </div>
@@ -666,6 +667,7 @@ function openAddModal() {
   document.getElementById('edit-id').value = '';
   document.getElementById('project-form').reset();
   document.getElementById('project-id').disabled = false;
+  document.getElementById('env-vars-list').innerHTML = '';
   modal.classList.add('open');
   document.getElementById('project-name').focus();
 }
@@ -682,6 +684,14 @@ function openEditModal(id) {
   document.getElementById('project-folder').value = project.folder;
   document.getElementById('project-command').value = project.command;
   document.getElementById('project-port').value = project.port || '';
+  // Populate env vars
+  const envList = document.getElementById('env-vars-list');
+  envList.innerHTML = '';
+  if (project.env && typeof project.env === 'object') {
+    Object.entries(project.env).forEach(([key, value]) => {
+      addEnvRow(key, value);
+    });
+  }
   modal.classList.add('open');
   document.getElementById('project-name').focus();
 }
@@ -695,12 +705,21 @@ async function saveProject(event) {
   event.preventDefault();
 
   const editId = document.getElementById('edit-id').value;
+  const env = {};
+  document.querySelectorAll('#env-vars-list .env-row').forEach(row => {
+    const key = row.querySelector('.env-key').value.trim();
+    const value = row.querySelector('.env-value').value;
+    if (key) {
+      env[key] = value;
+    }
+  });
   const project = {
     name: document.getElementById('project-name').value,
     id: document.getElementById('project-id').value,
     folder: document.getElementById('project-folder').value,
     command: document.getElementById('project-command').value,
-    port: document.getElementById('project-port').value ? parseInt(document.getElementById('project-port').value) : null
+    port: document.getElementById('project-port').value ? parseInt(document.getElementById('project-port').value) : null,
+    env: Object.keys(env).length > 0 ? env : {}
   };
 
   let res;
@@ -724,6 +743,20 @@ async function saveProject(event) {
   } else {
     toast(data.error || 'Failed to save', 'error');
   }
+}
+
+// Env vars editor
+function addEnvRow(key = '', value = '') {
+  const list = document.getElementById('env-vars-list');
+  const row = document.createElement('div');
+  row.className = 'env-row';
+  row.innerHTML = `
+    <input type="text" class="env-key" placeholder="KEY" value="${escapeHtml(key)}">
+    <input type="text" class="env-value" placeholder="value" value="${escapeHtml(value)}">
+    <button type="button" class="small danger env-remove" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  list.appendChild(row);
+  row.querySelector('.env-key').focus();
 }
 
 // Toast notifications
